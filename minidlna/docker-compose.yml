@@ -1,0 +1,18 @@
+version: '2'
+services:
+  minidlna:
+    container_name: minidlna
+    image: geekduck/minidlna
+    restart: always
+    network_mode: host
+    ports:
+      - "${UPNP_MAPPING_TCP}"
+      - "${UPNP_MAPPING_UDP}"
+    volumes:
+      - ${BASE_PATH}/minidlna/config/minidlna.conf:/etc/minidlna.conf
+      - ${BASE_PATH}/minidlna/cache:/var/cache/minidlna
+      - ${BASE_PATH}/minidlna/log:/var/log/minidlna
+      - ${BASE_PATH}/minidlna/media/AudioBooks:/opt/AudioBooks
+      - ${BASE_PATH}/minidlna/media/Music:/opt/Music
+      - ${BASE_PATH}/minidlna/media/Pictures:/opt/Pictures
+      - ${BASE_PATH}/minidlna/media/Videos:/opt/Videos
