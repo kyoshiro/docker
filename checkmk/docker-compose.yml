@@ -1,0 +1,18 @@
+version: "3"
+
+# More info at https://checkmk.com/cms_introduction_docker.html/
+services:
+  checkmk:
+    container_name: checkmk
+    image: checkmk/check-mk-raw:1.6.0-latest
+    ports:
+      - "${HTTP_MAPPING}"
+      - "${HTTPS_MAPPING}"
+    # Volumes store your data between container upgrades
+    volumes:
+       - '/etc/localtime:/etc/localtime:ro'
+       - '${BASE_PATH}/omd/sites:/omd/sites'
+    tmpfs:
+      - /opt/omd/sites
+      - /cmk/tmp:uid=1000,gid=1000
+    restart: always
