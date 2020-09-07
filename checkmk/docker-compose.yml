@@ -7,12 +7,9 @@ services:
     image: checkmk/check-mk-raw:1.6.0-latest
     ports:
       - "${HTTP_MAPPING}"
-      - "${HTTPS_MAPPING}"
     # Volumes store your data between container upgrades
     volumes:
        - '/etc/localtime:/etc/localtime:ro'
-       - '${BASE_PATH}/omd/sites:/omd/sites'
-    tmpfs:
-      - /opt/omd/sites
-      - /cmk/tmp:uid=1000,gid=1000
+       - '${BASE_PATH}/checkmk/etc/htpasswd:/etc/htpasswd'
+       - '${BASE_PATH}/checkmk/omd/sites:/omd/sites'
     restart: always
