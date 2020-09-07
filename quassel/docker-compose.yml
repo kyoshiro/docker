@@ -1,0 +1,17 @@
+---
+version: "2.1"
+services:
+  quassel-core:
+    image: linuxserver/quassel-core
+    container_name: quassel-core
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - "${TZ}"
+      #- RUN_OPTS=--config-from-environment #optional
+    volumes:
+      - ${BASE_PATH}/quassel/config:/config
+    ports:
+      - "${CORE_MAPPING}"
+      - "${OPTIONAL_MAPPING}"
+    restart: unless-stopped
