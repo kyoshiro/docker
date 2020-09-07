@@ -18,6 +18,11 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USER=${MYSQL_USER}
 
+  redis:
+    image: redis
+    container_name: redis
+    restart: always
+
   nextcloud:
     image: nextcloud
     container_name: nextcloud
@@ -34,4 +39,7 @@ services:
       - ${BASE_PATH}/nextcloud/etc/ssl/private:/etc/ssl/private
       - ${BASE_PATH}/nextcloud/etc/php/php.ini-development:/usr/local/etc/php/php.ini-development
       - ${BASE_PATH}/nextcloud/etc/php/php.ini-production:/usr/local/etc/php/php.ini-production
+    depends_on:
+        - db
+        - redis
     restart: always
