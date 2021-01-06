@@ -9,11 +9,15 @@ services:
       - "${DNS_MAPPING_UDP}"
       - "${DNS_MAPPING_TCP}"
       - "${DHCP_MAPPING_UDP}"
-      - "${HTTPS_MAPPING}"
-      - "${HTTPS_MAPPING}"
+      - "${HTTP_MAPPING}"
+      #- "${HTTPS_MAPPING}"
     environment:
       TZ: '${TZ}'
       WEBPASSWORD: '${WEBPASSWORD}'
+      REV_SERVER: '${REV_SERVER}'
+      REV_SERVER_DOMAIN: '${REV_SERVER_DOMAIN}'
+      REV_SERVER_TARGET: '${REV_SERVER_TARGET}'
+      REV_SERVER_CIDR: '${REV_SERVER_CIDR}'
     # Volumes store your data between container upgrades
     volumes:
        - '${BASE_PATH}/pihole/etc-pihole/:/etc/pihole/'
