@@ -4,12 +4,24 @@ version: "3"
 services:
   checkmk:
     container_name: checkmk
-    image: checkmk/check-mk-raw:2.0.0-latest
+    image: checkmk/check-mk-raw:2.1.0-latest
+    #image: checkmk/check-mk-raw:2.0.0p28
     ports:
       - "${HTTP_MAPPING}"
+      - "${HTTP2_MAPPING}"
+    tmpfs:
+      - /opt/omd/sites/cmk/tmp:uid=1000,gid=1000
     # Volumes store your data between container upgrades
     volumes:
        - '/etc/localtime:/etc/localtime:ro'
        - '${BASE_PATH}/checkmk/etc/htpasswd:/etc/htpasswd'
        - '${BASE_PATH}/checkmk/omd/sites:/omd/sites'
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '3.0'
+          memory: 8192M
+        reservations:
+          cpus: '0.25'
+          memory: 250M

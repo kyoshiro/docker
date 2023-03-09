@@ -6,7 +6,7 @@ volumes:
 
 services:
   db:
-    image: mariadb:10.7
+    image: 'mariadb:latest'
     command: "--transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb_read_only_compressed=OFF --skip-innodb-read-only-compressed"
     container_name: nextcloud-db
     restart: always
@@ -19,12 +19,12 @@ services:
       - MYSQL_USER=${MYSQL_USER}
 
   redis:
-    image: redis
-    container_name: redis
+    image: 'redis:latest'
+    container_name: nextcloud-redis
     restart: always
 
   nextcloud:
-    image: nextcloud
+    image: 'nextcloud:latest'
     container_name: nextcloud
     ports:
       - "${HTTP_MAPPING}"
@@ -43,3 +43,11 @@ services:
         - db
         - redis
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1536M
+        reservations:
+          cpus: '0.25'
+          memory: 768M
