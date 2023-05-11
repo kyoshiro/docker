@@ -1,0 +1,196 @@
+version: '3'
+
+#networks:
+#  monitor-net:
+#    driver: bridge
+
+volumes:
+    prometheus_data: {}
+    grafana_data: {}
+
+services:
+
+  prometheus:
+    image: prom/prometheus:latest
+    user: root
+    container_name: prometheus
+    volumes:
+      - ${BASE_PATH}/prometheus/etc:/etc/prometheus
+      - ${BASE_PATH}/prometheus:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    ports:
+      - "${PROMETHEUS_MAPPING}"
+    #networks:
+    #  - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    user: root
+    container_name: alertmanager
+    volumes:
+      - ${BASE_PATH}/alertmanager/etc:/etc/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    restart: unless-stopped
+    ports:
+      - "${ALERTMANAGER_MAPPING}"
+    #networks:
+    #  - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 32M
+        reservations:
+          cpus: '0.1'
+          memory: 16M
+
+  nodeexporter:
+    image: prom/node-exporter:latest
+    user: root
+    container_name: nodeexporter
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
+    ports:
+      - "${NODE_EXPORTER_MAPPING}"
+    #networks:
+    #  - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 64M
+        reservations:
+          cpus: '0.1'
+          memory: 32M
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    user: root
+    container_name: cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /cgroup:/cgroup:ro #doesn't work on MacOS only for Linux
+    restart: unless-stopped
+    ports:
+      - "${CADVISOR_MAPPING}"
+    #networks:
+    #  - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 32M
+
+  grafana:
+    image: grafana/grafana:latest
+    user: root
+    container_name: grafana
+    volumes:
+      - $BASE_PATH/grafana:/var/lib/grafana
+      - $BASE_PATH/grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    restart: unless-stopped
+    ports:
+      - "${GRAFANA_MAPPING}"
+    #networks:
+    #  - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 32M
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    volumes:
+      - $BASE_PATH/loki/etc:/etc/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: unless-stopped
+    ports:
+      - "${LOKI_MAPPING}"
+    #networks:
+    #  - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4096M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    volumes:
+      - /var/log:/var/log
+      - /var/lib/docker/containers:/var/lib/docker/containers
+      - $BASE_PATH/promtail/etc:/etc/promtail
+    command: -config.file=/etc/promtail/local-config.yaml
+    restart: unless-stopped
+    #ports:
+    #  - "${LOKI_MAPPING}"
+    #networks:
+    #  - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 64M
+        reservations:
+          cpus: '0.1'
+          memory: 32M
+
+

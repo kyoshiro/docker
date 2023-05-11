@@ -1,0 +1,79 @@
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+
+  # Attach these labels to any time series or alerts when communicating with
+  # external systems (federation, remote storage, Alertmanager).
+  external_labels:
+      monitor: 'iot.intern'
+
+# Load and evaluate rules in this file every 'evaluation_interval' seconds.
+rule_files:
+  - "alert.rules"
+
+# A scrape configuration containing exactly one endpoint to scrape.
+scrape_configs:
+  - job_name: 'yukimura-nodeexporter'
+    scrape_interval: 5s
+    static_configs:
+    - targets: ['nodeexporter:9100']
+
+  - job_name: 'yukimura-cadvisor'
+    scrape_interval: 5s
+    static_configs:
+    - targets: ['cadvisor:8080']
+      # relabel_configs:
+      # - source_labels: [__meta_target_label_exporter]
+      # action: keep
+      # regex: node-exporter
+
+  - job_name: 'yukimura-prometheus'
+    scrape_interval: 10s
+    static_configs:
+    - targets: ['localhost:9090']
+
+#  - job_name: 'pushgateway'
+#    scrape_interval: 10s
+#    honor_labels: true
+#    static_configs:
+#    - targets: ['pushgateway:9091']
+
+  - job_name: 'nobuyuki-nodeexporter'
+    scrape_interval: 5s
+    static_configs:
+    - targets: ['nobuyuki.iot.intern:9100']
+
+  - job_name: 'nobuyuki-cadvisor'
+    scrape_interval: 5s
+    static_configs:
+    - targets: ['nobuyuki.iot.intern:8080']
+      # relabel_configs:
+      # - source_labels: [__meta_target_label_exporter]
+      # action: keep
+      # regex: node-exporter
+
+  - job_name: 'sarutobi-nodeexporter'
+    scrape_interval: 5s
+    static_configs:
+    - targets: ['sarutobi.iot.intern:9100']
+
+  - job_name: 'sarutobi-cadvisor'
+    scrape_interval: 5s
+    static_configs:
+    - targets: ['sarutobi.iot.intern:8080']
+    # relabel_configs:
+    # - source_labels: [__meta_target_label_exporter]
+    # action: keep
+    # regex: node-exporter
+
+  - job_name: 'opnsense-nodeexporter'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['opnsense.iot.intern:9100']
+
+alerting:
+  alertmanagers:
+  - scheme: http
+    static_configs:
+    - targets: 
+      - 'alertmanager:9093'

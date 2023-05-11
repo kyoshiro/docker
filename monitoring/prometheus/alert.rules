@@ -1,0 +1,322 @@
+groups:
+- name: targets
+  rules:
+  - alert: MonitoringServiceDown
+    expr: up == 0
+    for: 30s
+    labels:
+      severity: critical
+    annotations:
+      summary: "Monitor service non-operational"
+      description: "Service {{ $labels.instance }} is down."
+
+- name: host
+  rules:
+  # Kernel updates
+  - alert: KernelUpdate
+    expr: |
+      changes(kernel_version_info{job=~".*-nodeexporter"}[3d]) > 0
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Linux kernel version changed on {{ $labels.instance }}"
+      description: "The Linux kernel version on {{ $labels.instance }} has changed from {{ $value }}"
+
+  - alert: KernelUpdate
+    expr: |
+      changes(kernel_version_info{job=~".*-nodeexporter"}[7d]) > 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Linux kernel version changed on {{ $labels.instance }}"
+      description: "The Linux kernel version on {{ $labels.instance }} has changed from {{ $value }}"
+
+  # CPU load rule
+  - alert: HighCPULoad
+    expr: |
+      node_load1 > 4
+    for: 30s
+    labels:
+      severity: warning
+    annotations:
+      summary: "High CPU load on {{ $labels.instance }}"
+      description: CPU usage on {{ $labels.instance }} is currently at {{ humanize $value }} average for 1m.
+
+  - alert: HighCPULoad
+    expr: |
+      node_load1 > 10
+    for: 30s
+    labels:
+      severity: critical
+    annotations:
+      summary: "High CPU load on {{ $labels.instance }}"
+      description: CPU usage on {{ $labels.instance }} is currently at {{ humanize $value }} average for 1m.
+
+  # CPU conext switches
+  - alert: HighContextSwitches
+    expr: |
+      rate(node_context_switches_total{job=~"(sarutobi|nobuyuki).*"}[15s]) > 2000 or
+      rate(node_context_switches_total{job=~"yukimura.*"}[15s]) > 25000
+    for: 30s
+    labels:
+      severity: warning
+    annotations:
+      summary: "High amount of context switches on {{ $labels.instance }}"
+      description: Context switches on {{ $labels.instance }} is currently at high rate of {{ humanize $value }}.
+
+  - alert: HighContextSwitches
+    expr: |
+      rate(node_context_switches_total{job=~"(sarutobi|nobuyuki).*"}[15s]) > 3000 or
+      rate(node_context_switches_total{job=~"yukimura.*"}[15s]) > 30000
+    for: 30s
+    labels:
+      severity: critical
+    annotations:
+      summary: "Very high amount of context switches on {{ $labels.instance }}"
+      description: Context switches on {{ $labels.instance }} is currently at very high rate of {{ humanize $value }}.
+
+  # Memory load rule
+  - alert: HighMemoryLoad
+    expr: (sum(node_memory_MemTotal_bytes) - sum(node_memory_MemFree_bytes + node_memory_Buffers_bytes + node_memory_Cached_bytes) ) / sum(node_memory_MemTotal_bytes) * 100 > 85
+    for: 30s
+    labels:
+      severity: warning
+    annotations:
+      summary: "High memory load on {{ $labels.instance }}"
+      description: Memory usage on {{ $labels.instance }} is currently at {{ humanize $value }}.
+
+  # Disk load rule
+  - alert: HighStorageLoad
+    expr: (node_filesystem_size_bytes{fstype="ext4"} - node_filesystem_free_bytes{fstype="ext4"}) / node_filesystem_size_bytes{fstype="ext4"}  * 100 > 85
+    for: 30s
+    labels:
+      severity: warning
+    annotations:
+      summary: "High storage load on {{ $labels.instance }}"
+      description: Storage usage on {{ $labels.instance }} is currently at {{ humanize $value }}%.
+
+  # CPU usage rule
+  - alert: HighCPUUsage
+    expr: 100 * (1 - avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m]))) > 85
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: High CPU usage on {{ $labels.instance }}
+      description: CPU usage on {{ $labels.instance }} is currently at high rate of {{ $value }}%.
+
+  - alert: HighCPUUsage
+    expr: |
+      100 * (1 - avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[10m]))) > 95
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: High CPU usage on {{ $labels.instance }}
+      description: CPU usage on {{ $labels.instance }} is currently at very high rate of {{ $value }}%.
+
+  # Memory usage rule
+  - alert: HighMemoryUsage
+    expr: |
+      node_memory_MemFree / node_memory_MemTotal * 100 < 10
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: High memory usage on {{ $labels.instance }}
+      description: Memory usage on {{ $labels.instance }} is currently at {{ printf "%.2f" $value }}%.
+
+  - alert: HighMemoryUsage
+    expr: |
+      node_memory_MemFree / node_memory_MemTotal * 100 < 5
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: High memory usage on {{ $labels.instance }}
+      description: Memory usage on {{ $labels.instance }} is currently at {{ printf "%.2f" $value }}%.
+
+  # Disk usage rule
+  - alert: HighDiskUsage
+    expr: |
+      100 * node_filesystem_avail / node_filesystem_size < 20
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: High disk usage on {{ $labels.instance }}
+      description: Disk usage on {{ $labels.instance }} is currently at {{ printf "%.2f" $value }}%.
+
+  - alert: HighDiskUsage
+    expr: |
+      100 * node_filesystem_avail / node_filesystem_size < 10
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: High disk usage on {{ $labels.instance }}
+      description: Disk usage on {{ $labels.instance }} is currently at {{ printf "%.2f" $value }}%.
+
+  # Network traffic rule
+  - alert: HighNetworkTraffic
+    expr: |
+      (rate(node_network_receive_bytes_total[5m]) + rate(node_network_transmit_bytes_total[5m])) > 1e6
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: High network traffic on {{ $labels.instance }}
+      description: Network traffic on {{ $labels.instance }} is currently at {{ printf "%.2f" $value }} bytes per second.
+
+  - alert: HighNetworkTraffic
+    expr: |
+      (rate(node_network_receive_bytes_total[5m]) + rate(node_network_transmit_bytes_total[5m])) > 1e9
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: High network traffic on {{ $labels.instance }}
+      description: Network traffic on {{ $labels.instance }} is currently at {{ printf "%.2f" $value }} bytes per second.
+
+  # Temperature rule
+  - alert: HighTemperature
+    expr: |
+      node_hwmon_temp_celsius{job=~"(sarutobi|nobuyuki).*"} > 42 or
+      node_hwmon_temp_celsius{job=~"yukimura.*"} > 45 or
+      node_cpu_temperature_celsius{job=~"opnsense.*"} > 58
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: High temperature on {{ $labels.instance }}
+      description: Temperature on {{ $labels.instance }} is currently at {{ printf "%.2f" $value }}°C.
+
+  - alert: HighTemperature
+    expr: |
+      node_hwmon_temp_celsius{job=~"(sarutobi|nobuyuki).*"} > 55 or
+      node_hwmon_temp_celsius{job=~"yukimura.*"} > 55 or
+      node_cpu_temperature_celsius{job=~"opnsense.*"} > 68
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: High temperature on {{ $labels.instance }}
+      description: Temperature on {{ $labels.instance }} is currently at {{ printf "%.2f" $value }}°C.
+
+
+- name: containers
+  rules:
+  - alert: PiHoleDown
+    expr: absent(container_memory_usage_bytes{name="pihole"})
+    for: 30s
+    labels:
+      severity: critical
+    annotations:
+      summary: "PiHole down on {{ $labels.instance }}"
+      description: "PiHole container  on {{ $labels.instance }} is down for more than 30 seconds."
+
+  - alert: PiHoleHighCPUUsage
+    expr: sum(rate(container_cpu_usage_seconds_total{name="pihole"}[1m])) / count(node_cpu_seconds_total{mode="system"}) * 100 > 10
+    for: 30s
+    labels:
+      severity: warning
+    annotations:
+      summary: "PiHole high CPU usage on {{ $labels.instance }}"
+      description: PiHole CPU usage on {{ $labels.instance }} is currently at {{ $value }}%.
+
+  - alert: PiHoleHighMemoryUsage
+    expr: sum(container_memory_usage_bytes{name="pihole"}) > 2.5e8
+    for: 30s
+    labels:
+      severity: warning
+    annotations:
+      summary: "PiHole high memory usage on {{ $labels.instance }}"
+      description: PiHole memory usage on {{ $labels.instance }} is currently at {{ humanize $value }}.
+
+  # Network traffic rule
+  - alert: PiHoleHighNetworkTraffic
+    expr: (rate(container_network_receive_bytes_total{name="pihole"}[5m]) + rate(container_network_transmit_bytes_total{name="pihole"}[5m])) > 1e7
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: PiHole igh network traffic on {{ $labels.instance }}
+      description: PiHole network traffic on {{ $labels.instance }} is currently at {{ printf "%.2f" $value }} bytes per second.
+
+  - alert: NextcloudDown
+    expr: absent(container_memory_usage_bytes{name="nextcloud"})
+    for: 30s
+    labels:
+      severity: critical
+    annotations:
+      summary: "Nextcloud down on {{ $labels.instance }}"
+      description: "Nextcloud container on {{ $labels.instance }} is down for more than 30 seconds."
+
+  - alert: NextcloudHighCPUUsage
+    expr: sum(rate(container_cpu_usage_seconds_total{name="nextcloud"}[1m])) / count(node_cpu_seconds_total{mode="system"}) * 100 > 10
+    for: 30s
+    labels:
+      severity: warning
+    annotations:
+      summary: "Nextcloud high CPU usage on {{ $labels.instance }}"
+      description: Nextcloud CPU usage on {{ $labels.instance }} is currently at {{ $value }}%.
+
+  - alert: NextCLoudHighMemoryUsage
+    expr: sum(container_memory_usage_bytes{name="nextcloud"}) > 1.5e9
+    for: 30s
+    labels:
+      severity: warning
+    annotations:
+      summary: "Nextcloud high memory usage on {{ $labels.instance }}"
+      description: Nextcloud memory usage on {{ $labels.instance }} is currently at {{ humanize $value }}.
+
+  # Network traffic rule
+  - alert: NextcloudHighNetworkTraffic
+    expr: (rate(container_network_receive_bytes_total{name="nextcloud"}[5m]) + rate(container_network_transmit_bytes_total{name="nextcloud"}[5m])) > 1e7
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: Nextcloud igh network traffic on {{ $labels.instance }}
+      description: Nextcloud network traffic on {{ $labels.instance }} is currently at {{ printf "%.2f" $value }} bytes per second.
+
+  - alert: GitlabDown
+    expr: absent(container_memory_usage_bytes{name="gitlab"})
+    for: 30s
+    labels:
+      severity: critical
+    annotations:
+      summary: "Gitlab down on {{ $labels.instance }}"
+      description: "Gitlab container  on {{ $labels.instance }} is down for more than 30 seconds."
+
+  - alert: GitlabHighCPUUsage
+    expr: sum(rate(container_cpu_usage_seconds_total{name="gitlab"}[1m])) / count(node_cpu_seconds_total{mode="system"}) * 100 > 10
+    for: 30s
+    labels:
+      severity: warning
+    annotations:
+      summary: "Gitlab high CPU usage on {{ $labels.instance }}"
+      description: Gitlab CPU usage on {{ $labels.instance }} is currently at {{ $value }}%.
+
+  - alert: GitlabHighMemoryUsage
+    expr: sum(container_memory_usage_bytes{name="gitlab"}) > 6.0e9
+    for: 30s
+    labels:
+      severity: warning
+    annotations:
+      summary: "Gitlab high memory usage on {{ $labels.instance }}"
+      description: Gitlab memory usage on {{ $labels.instance }} is currently at {{ humanize $value }}.
+
+  # Network traffic rule
+  - alert: GitlabHighNetworkTraffic
+    expr: (rate(container_network_receive_bytes_total{name="gitlab"}[5m]) + rate(container_network_transmit_bytes_total{name="gitlab"}[5m])) > 1e7
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: Gitlab igh network traffic on {{ $labels.instance }}
+      description: Gitlab network traffic on {{ $labels.instance }} is currently at {{ printf "%.2f" $value }} bytes per second.
+
+
