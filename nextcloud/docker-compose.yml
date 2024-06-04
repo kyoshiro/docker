@@ -6,7 +6,7 @@ volumes:
 
 services:
   db:
-    image: 'mariadb:latest'
+    image: 'mariadb:10.11.3'
     command: "--transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb_read_only_compressed=OFF --skip-innodb-read-only-compressed"
     container_name: nextcloud-db
     restart: always
