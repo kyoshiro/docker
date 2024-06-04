@@ -7,6 +7,7 @@ start_gitlab_runner() {
 	echo "Starting gitlab-runner $GITLAB_RUNNER_NAME"
 
 	docker run -d --name $GITLAB_RUNNER_NAME --restart always \
+	 --add-host gitlab.iot.intern:172.16.1.226 \
          -v $BASE_PATH/$GITLAB_RUNNER_NAME/config:/etc/gitlab-runner \
          -v $BASE_PATH/$GITLAB_RUNNER_NAME/certs:/etc/gitlab-runner/certs \
          -v /var/run/docker.sock:/var/run/docker.sock \
