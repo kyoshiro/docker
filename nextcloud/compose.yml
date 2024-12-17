@@ -2,23 +2,24 @@ version: '3'
 
 volumes:
   nextcloud:
-  db:
+  nextcloud-db:
 
 services:
-  db:
+  nextcloud-db:
     image: 'mariadb:10.11.3'
     command: "--transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb_read_only_compressed=OFF --skip-innodb-read-only-compressed"
     container_name: nextcloud-db
     restart: always
     volumes:
-      - ${BASE_PATH}/nextcloud/db:/var/lib/mysql
+      - ${BASE_PATH}/nextcloud-db:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USER=${MYSQL_USER}
+      - MARIADB_AUTO_UPGRADE=1
 
-  redis:
+  nextcloud-redis:
     image: 'redis:latest'
     container_name: nextcloud-redis
     restart: always
@@ -30,7 +31,7 @@ services:
       - "${HTTP_MAPPING}"
       - "${HTTPS_MAPPING}"
     links:
-      - db
+      - nextcloud-db
     volumes:
       - ${BASE_PATH}/nextcloud/config:/var/www/html/config
       - ${BASE_PATH}/nextcloud/data:/var/www/html/data
@@ -40,8 +41,8 @@ services:
       - ${BASE_PATH}/nextcloud/etc/php/php.ini-development:/usr/local/etc/php/php.ini-development
       - ${BASE_PATH}/nextcloud/etc/php/php.ini-production:/usr/local/etc/php/php.ini-production
     depends_on:
-        - db
-        - redis
+        - nextcloud-db
+        - nextcloud-redis
     restart: always
     deploy:
       resources:

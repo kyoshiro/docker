@@ -17,6 +17,10 @@ services:
       - '$GITLAB_HOME/config:/etc/gitlab'
       - '$GITLAB_HOME/logs:/var/log/gitlab'
       - '$GITLAB_HOME/data:/var/opt/gitlab'
+    ulimit:
+      nofile:
+        soft: 65535
+        hard: 65535
     deploy:
       resources:
         limits:
