@@ -6,7 +6,9 @@ volumes:
 
 services:
   nextcloud-db:
-    image: 'mariadb:10.11.3'
+    image: 'docker.io/library/mariadb:10.11.13'
+    labels:
+      io.containers.autoupdate: "image"
     command: "--transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb_read_only_compressed=OFF --skip-innodb-read-only-compressed"
     container_name: nextcloud-db
     restart: always
@@ -20,18 +22,24 @@ services:
       - MARIADB_AUTO_UPGRADE=1
 
   nextcloud-redis:
-    image: 'redis:latest'
+    image: 'docker.io/library/redis:latest'
+    labels:
+      io.containers.autoupdate: "image"
     container_name: nextcloud-redis
     restart: always
 
   nextcloud:
-    image: 'nextcloud:latest'
+    image: 'docker.io/library/nextcloud:latest'
+    labels:
+      io.containers.autoupdate: "image"
     container_name: nextcloud
     ports:
       - "${HTTP_MAPPING}"
       - "${HTTPS_MAPPING}"
     links:
       - nextcloud-db
+    environment:
+      PHP_MEMORY_LIMIT: 1G
     volumes:
       - ${BASE_PATH}/nextcloud/config:/var/www/html/config
       - ${BASE_PATH}/nextcloud/data:/var/www/html/data

@@ -1,7 +1,9 @@
 version: "3"
 services:
   gitlab:
-    image: 'gitlab/gitlab-ce:latest'
+    image: 'docker.io/gitlab/gitlab-ce:latest'
+    labels:
+      io.containers.autoupdate: "image"
     container_name: 'gitlab' 
     restart: always
     hostname: '${HOSTNAME}'

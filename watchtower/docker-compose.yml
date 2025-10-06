@@ -2,13 +2,13 @@ version: "3"
 
 services:
   watchtower:
-    container_name: watchtower 
+    container_name: watchtower
     image: containrrr/watchtower:latest
     environment:
      - WATCHTOWER_NOTIFICATION_REPORT=${WATCHTOWER_NOTIFICATION_REPORT}
      - WATCHTOWER_NOTIFICATION_URL=${WATCHTOWER_NOTIFICATION_URL}
      - WATCHTOWER_NOTIFICATION_LEVEL=${WATCHTOWER_NOTIFICATION_LEVEL}
     volumes:
-     - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/user/$UID/podman/podman.sock:/var/run/docker.sock:ro
     command: --interval 3600
     restart: unless-stopped
